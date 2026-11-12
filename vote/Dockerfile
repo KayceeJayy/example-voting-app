@@ -22,17 +22,33 @@ ENV FLASK_ENV=development
 CMD ["python", "app.py"]
 
 # final defines the stage that will bundle the application for production
-FROM base AS final
+# ======================================================
+# Hardened production stage: Python 3.11 / Alpine 3.23
+# ======================================================
 
-# Prevent Python from writing bytecode to the source directory
+FROM public.ecr.aws/docker/library/python@sha256:3e6740f02c2a48bfcf675c39ae0f456153667d9d87c1e5bb2e13ff848dba307f AS final
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     HOME=/tmp
 
-# Package the application with non-root ownership
+WORKDIR /usr/local/app
+
+# Install the patched Kerberos library.
+RUN apk add --no-cache --upgrade \
+    'krb5-libs>=1.22.3-r0'
+
+# Install application dependencies.
+COPY requirements.txt ./requirements.txt
+
+RUN python -m pip install --no-cache-dir -r requirements.txt && \
+    python -m pip uninstall -y setuptools && \
+    python -m pip check
+
+# Copy source files with non-root ownership.
 COPY --chown=10001:10001 . .
 
-# Run without root privileges
+# Run the application without root privileges.
 USER 10001:10001
 
 EXPOSE 8080
