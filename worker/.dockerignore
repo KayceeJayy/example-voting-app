@@ -1,0 +1,25 @@
+# .NET build output
+**/bin/
+**/obj/
+
+# IDE and developer files
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# Version control
+.git/
+.github/
+
+# Local secrets and environment files
+.env
+.env.*
+*.pem
+*.key
+
+# Temporary files
+*.log
+*.tmp
+.DS_Store
