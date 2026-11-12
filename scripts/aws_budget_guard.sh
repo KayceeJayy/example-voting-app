@@ -23,6 +23,30 @@ if ! "${AWS[@]}" budgets describe-budgets --account-id "$ACCOUNT_ID" --output js
   exit 1
 fi
 
+# Fail closed if the AWS response is empty or malformed.
+python3 - "$TEMP/budgets.json" <<'PYVALIDATE'
+import json
+import sys
+from pathlib import Path
+
+path = Path(sys.argv[1])
+try:
+    data = json.loads(path.read_text())
+except (OSError, ValueError) as exc:
+    raise SystemExit(
+        f"ERROR: Invalid AWS Budgets response: {exc}"
+    )
+
+if not isinstance(data, dict) or not isinstance(
+    data.get("Budgets"), list
+):
+    raise SystemExit(
+        "ERROR: AWS Budgets response has no valid Budgets list."
+    )
+
+print("PASS: AWS Budgets response is valid JSON.")
+PYVALIDATE
+
 if python3 - "$TEMP/budgets.json" "$BUDGET_NAME" <<'PY'
 import json, sys
 budgets = json.load(open(sys.argv[1])).get('Budgets', [])
