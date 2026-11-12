@@ -1,0 +1,18 @@
+FROM public.ecr.aws/docker/library/python@sha256:3e6740f02c2a48bfcf675c39ae0f456153667d9d87c1e5bb2e13ff848dba307f AS final
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HOME=/tmp
+
+WORKDIR /usr/local/app
+
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY --chown=10001:10001 . .
+
+USER 10001:10001
+
+EXPOSE 8080
+
+CMD ["gunicorn", "app:app", "-b", "0.0.0.0:8080", "--log-file", "-", "--access-logfile", "-", "--workers", "4"]
