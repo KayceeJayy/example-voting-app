@@ -50,4 +50,3 @@ for service in ("vote", "result", "worker"):
                 f"status={v.get('Status', 'unknown')} | "
                 f"fix={v.get('FixedVersion') or 'not listed'}"
             )
-

@@ -1,7 +1,7 @@
 # Voting App — Container Security Verification
 
-**Verification date:** 12 November 2026  
-**Environment:** Linux Mint, Docker Engine  
+**Verification date:** 12 November 2026
+**Environment:** Linux Mint, Docker Engine
 **Scope:** Vote, Worker, and Results production images
 
 ## 1. Security controls
