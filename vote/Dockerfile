@@ -39,9 +39,9 @@ RUN apk add --no-cache --upgrade \
     'krb5-libs>=1.22.3-r0'
 
 # Install application dependencies.
-COPY requirements.txt ./requirements.txt
+COPY requirements-prod.lock ./requirements-prod.lock
 
-RUN python -m pip install --no-cache-dir -r requirements.txt && \
+RUN python -m pip install --no-cache-dir --no-deps -r requirements-prod.lock && \
     python -m pip uninstall -y setuptools && \
     python -m pip check
 
