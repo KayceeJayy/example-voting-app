@@ -1,0 +1,18 @@
+# These IDs were validated by your AWS read-only preflight on 12 Nov 2026.
+aws_region = "eu-north-1"
+aws_profile = "terraform-process"
+cluster_name = "devops-capstone-eks"
+kubernetes_version = "1.36"
+vpc_id = "vpc-0665e40b7ff3d120b"
+public_subnet_ids = [
+  "subnet-08250aaba0e089068",
+  "subnet-00e259e5795fbd4ca",
+  "subnet-0577cd979d2df3ab3",
+]
+
+# REQUIRED: replace before terraform plan. A single IPv4 /32 restricts public API access.
+public_api_cidr = "REPLACE_WITH_YOUR_PUBLIC_IPV4/32"
+
+# Minimum initial on-demand capacity: grow only after reviewing workload and costs.
+node_instance_type = "t3.large"
+node_desired_size = 1

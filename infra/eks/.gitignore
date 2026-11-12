@@ -1,0 +1,13 @@
+# Local Terraform working data and state must not enter Git.
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.auto.tfvars
+crash.log
+crash.*.log
+# We DO commit .terraform.lock.hcl after terraform init for provider reproducibility.
+!terraform.tfvars.example
+tfplan
+*.tfplan.*
