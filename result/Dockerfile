@@ -34,24 +34,41 @@ CMD ["node", "server.js"]
 # PRODUCTION STAGE
 # =====================================================
 
-FROM public.ecr.aws/docker/library/node@sha256:dc26ae92c9fb15cf6b1d63e20f0944b2efe0f115b20e00be48fb23fceb061c54 AS final
+# ======================================================
+# Production dependencies: Node.js 24 / Alpine 3.23
+# ======================================================
+FROM public.ecr.aws/docker/library/node@sha256:3946fb783fdce8a2812136ea694bc95c698c4f4096f3fd18568dc27a8ac389dc AS production-deps
 
-ENV NODE_ENV=production \
-    PORT=8080
+ENV NODE_ENV=production
 
 WORKDIR /usr/local/app
 
-# Install production dependencies only.
 COPY package*.json ./
 
-RUN npm ci --omit=dev && \
-    npm cache clean --force
+RUN npm ci --omit=dev
 
-# Copy application files with non-root ownership.
-COPY --chown=node:node . .
+# ======================================================
+# Minimal production runtime: Alpine 3.23
+# ======================================================
+FROM public.ecr.aws/docker/library/alpine@sha256:469c9ea410b9215eaee7976ba6c0639039b444be8e5d638f7abbada189971eb2 AS final
 
-# Run the application as a non-root user.
-USER node
+RUN apk add --no-cache libstdc++ ca-certificates
+
+ENV NODE_ENV=production \
+    PORT=8080 \
+    HOME=/tmp
+
+WORKDIR /usr/local/app
+
+# Include Node.js, but exclude npm and Yarn.
+COPY --from=production-deps /usr/local/bin/node /usr/local/bin/node
+
+# Copy production dependencies and application files.
+COPY --from=production-deps --chown=10001:10001 /usr/local/app/node_modules ./node_modules
+
+COPY --chown=10001:10001 . .
+
+USER 10001:10001
 
 EXPOSE 8080
 
