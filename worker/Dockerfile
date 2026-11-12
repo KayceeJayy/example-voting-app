@@ -1,28 +1,26 @@
-# because of dotnet, we always build on amd64, and target platforms in cli
-# dotnet doesn't support QEMU for building or running. 
-# (errors common in arm/v7 32bit) https://github.com/dotnet/dotnet-docker/issues/1537
-# https://hub.docker.com/_/microsoft-dotnet
-# hadolint ignore=DL3029
-# to build for a different platform than your host, use --platform=<platform>
-# for example, if you were on Intel (amd64) and wanted to build for ARM, you would use:
-# docker buildx build --platform "linux/arm64/v8" .
-
-# build compiles the program for the builder's local platform
-FROM --platform=${BUILDPLATFORM} mcr.microsoft.com/dotnet/sdk:7.0 AS build
-ARG TARGETPLATFORM
-ARG TARGETARCH
-ARG BUILDPLATFORM
-RUN echo "I am running on $BUILDPLATFORM, building for $TARGETPLATFORM"
+# Build stage: .NET 10 LTS
+FROM mcr.microsoft.com/dotnet/sdk@sha256:fe0fd4e93bd2fbb47c883b7a6369e5c8d3db8bf01cdc5981f6ee35fbdf3ff4fb AS build
 
 WORKDIR /source
-COPY *.csproj .
-RUN dotnet restore -a $TARGETARCH
+
+COPY *.csproj ./
+RUN dotnet restore
 
 COPY . .
-RUN dotnet publish -c release -o /app -a $TARGETARCH --self-contained false --no-restore
+RUN dotnet publish -c Release -o /out --no-restore
 
-# app image
-FROM mcr.microsoft.com/dotnet/runtime:7.0
+# Production stage
+FROM mcr.microsoft.com/dotnet/runtime@sha256:80a51954ac70925e5783cb1ed35129a4243dcb1cddef20066b67346e17db284d AS final
+
+ENV HOME=/tmp \
+    DOTNET_CLI_HOME=/tmp \
+    DOTNET_EnableDiagnostics=0
+
 WORKDIR /app
-COPY --from=build /app .
+
+COPY --from=build --chown=10001:10001 /out/ ./
+
+# Non-root execution
+USER 10001:10001
+
 ENTRYPOINT ["dotnet", "Worker.dll"]
