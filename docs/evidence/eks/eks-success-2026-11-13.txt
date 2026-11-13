@@ -1,0 +1,45 @@
+===== SUCCESSFUL AWS EKS DEPLOYMENT =====
+Date: 2026-11-13
+
+===== TERRAFORM-MANAGED RESOURCES =====
+data.aws_subnet.existing["subnet-00e259e5795fbd4ca"]
+data.aws_subnet.existing["subnet-0577cd979d2df3ab3"]
+data.aws_subnet.existing["subnet-08250aaba0e089068"]
+data.aws_vpc.existing
+aws_eks_cluster.lab
+aws_eks_node_group.lab
+aws_iam_role.eks_cluster
+aws_iam_role.eks_nodes
+aws_iam_role_policy_attachment.eks_cluster
+aws_iam_role_policy_attachment.eks_nodes_cni
+aws_iam_role_policy_attachment.eks_nodes_ecr
+aws_iam_role_policy_attachment.eks_nodes_worker
+
+===== EKS CLUSTER =====
+{
+    "Name": "devops-capstone-eks",
+    "Status": "ACTIVE",
+    "Version": "1.36"
+}
+
+===== MANAGED NODE GROUP =====
+{
+    "Name": "capstone-workers",
+    "Status": "ACTIVE",
+    "InstanceTypes": [
+        "m7i-flex.large"
+    ],
+    "Desired": 1,
+    "Issues": []
+}
+
+===== KUBERNETES NODES =====
+NAME                                           STATUS   ROLES    AGE   VERSION               INTERNAL-IP     EXTERNAL-IP     OS-IMAGE                        KERNEL-VERSION                            CONTAINER-RUNTIME
+ip-172-31-29-133.eu-north-1.compute.internal   Ready    <none>   15m   v1.36.5-eks-8418f54   172.31.29.133   51.20.255.117   Amazon Linux 2023.12.20261102   6.18.56-125.164.amzn2023.x86_64 (amd64)   containerd://2.3.7+unknown
+
+===== KUBERNETES SYSTEM PODS =====
+NAMESPACE     NAME                       READY   STATUS    RESTARTS   AGE
+kube-system   aws-node-d8dp4             2/2     Running   0          15m
+kube-system   coredns-5f9744cff4-8gzcf   1/1     Running   0          17m
+kube-system   coredns-5f9744cff4-9djt7   1/1     Running   0          17m
+kube-system   kube-proxy-qnf8z           1/1     Running   0          15m
