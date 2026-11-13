@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: db-credentials
+  labels:
+    app: db
+    {{- include "voting-app.labels" . | nindent 4 }}
+type: Opaque
+data:
+  # Demo-only: the upstream Worker and Results currently hardcode this password.
+  password: {{ .Values.postgres.password | b64enc | quote }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db
+  labels:
+    app: db
+    {{- include "voting-app.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: db
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app: db
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: postgres
+          image: {{ printf "%s:%s" .Values.postgres.image.repository (.Values.postgres.image.tag | toString) | quote }}
+          imagePullPolicy: {{ .Values.postgres.image.pullPolicy }}
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_DB
+              value: postgres
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: password
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          ports:
+            - name: postgres
+              containerPort: 5432
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "postgres"]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "postgres"]
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.postgres.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: db
+  labels:
+    app: db
+    {{- include "voting-app.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: db
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  ports:
+    - name: postgres
+      port: 5432
+      targetPort: postgres
+      protocol: TCP

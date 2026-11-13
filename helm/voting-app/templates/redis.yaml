@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels:
+    app: redis
+    {{- include "voting-app.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: redis
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app: redis
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: redis
+          image: {{ printf "%s:%s" .Values.redis.image.repository (.Values.redis.image.tag | toString) | quote }}
+          imagePullPolicy: {{ .Values.redis.image.pullPolicy }}
+          ports:
+            - name: redis
+              containerPort: 6379
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          readinessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 5
+          livenessProbe:
+            exec:
+              command: ["redis-cli", "ping"]
+            periodSeconds: 15
+          resources:
+            {{- toYaml .Values.redis.resources | nindent 12 }}
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  labels:
+    app: redis
+    {{- include "voting-app.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    app: redis
+    app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP

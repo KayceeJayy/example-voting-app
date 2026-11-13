@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: worker
+  labels:
+    app: worker
+    {{- include "voting-app.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.worker.replicas }}
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: worker
+      app.kubernetes.io/instance: {{ .Release.Name | quote }}
+  template:
+    metadata:
+      labels:
+        app: worker
+        app.kubernetes.io/instance: {{ .Release.Name | quote }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: worker
+          image: {{ printf "%s:%s" .Values.worker.image.repository (.Values.worker.image.tag | toString) | quote }}
+          imagePullPolicy: {{ .Values.worker.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          # The .NET Worker has no HTTP server or health executable.
+          # Kubernetes restarts it on process exit. Follow its logs for DB/Redis connectivity.
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}

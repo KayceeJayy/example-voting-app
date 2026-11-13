@@ -1,0 +1,58 @@
+# Single release per namespace. Service names redis and db must stay stable:
+# the upstream Vote, Worker and Results implementations use these DNS names.
+# The three application repository values are placeholders; publish to ECR first.
+
+vote:
+  image:
+    repository: registry.invalid/devops-capstone/vote
+    tag: replace-me
+    pullPolicy: IfNotPresent
+  replicas: 1
+  servicePort: 8080
+  containerPort: 8080
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 512Mi}
+
+result:
+  image:
+    repository: registry.invalid/devops-capstone/result
+    tag: replace-me
+    pullPolicy: IfNotPresent
+  replicas: 1
+  servicePort: 8080
+  containerPort: 8080
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 384Mi}
+
+worker:
+  image:
+    repository: registry.invalid/devops-capstone/worker
+    tag: replace-me
+    pullPolicy: IfNotPresent
+  replicas: 1
+  resources:
+    requests: {cpu: 100m, memory: 128Mi}
+    limits: {cpu: 500m, memory: 384Mi}
+
+redis:
+  image:
+    repository: public.ecr.aws/docker/library/redis
+    tag: 7-alpine
+    pullPolicy: IfNotPresent
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {cpu: 250m, memory: 192Mi}
+
+postgres:
+  image:
+    repository: public.ecr.aws/docker/library/postgres
+    tag: 15-alpine
+    pullPolicy: IfNotPresent
+  # WARNING: this upstream teaching app hardcodes postgres/postgres in Worker
+  # and Results source. This is a known demo credential, NOT production-safe.
+  password: postgres
+  resources:
+    requests: {cpu: 100m, memory: 192Mi}
+    limits: {cpu: 500m, memory: 512Mi}
