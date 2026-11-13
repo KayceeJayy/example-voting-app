@@ -54,7 +54,7 @@ variable "public_api_cidr" {
 variable "node_instance_type" {
   type        = string
   description = "On-demand EC2 instance size; cost review is required before applying."
-  default     = "t3.large"
+  default     = "m7i-flex.large"
 }
 
 variable "node_desired_size" {
