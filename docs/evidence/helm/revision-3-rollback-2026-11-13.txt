@@ -1,0 +1,81 @@
+===== HELM RELEASE HISTORY AFTER ROLLBACK =====
+REVISION	UPDATED                 	STATUS    	CHART           	APP VERSION	DESCRIPTION                                                                                                                     
+1       	Fri Nov 13 13:03:55 2026	superseded	voting-app-0.1.0	1.0        	Install complete                                                                                                                
+2       	Fri Nov 13 13:26:44 2026	failed    	voting-app-0.1.0	1.0        	Upgrade "capstone-voting" failed: resource Deployment/voting/vote not ready. status: InProgress, message: Pending termination...
+3       	Fri Nov 13 13:31:53 2026	deployed  	voting-app-0.1.0	1.0        	Rollback to 1                                                                                                                   
+
+===== CURRENT HELM STATUS =====
+NAME: capstone-voting
+LAST DEPLOYED: Fri Nov 13 13:31:53 2026
+NAMESPACE: voting
+STATUS: deployed
+REVISION: 3
+DESCRIPTION: Rollback to 1
+RESOURCES:
+==> v1/Deployment
+NAME   READY   UP-TO-DATE   AVAILABLE   AGE
+db     1/1     1            1           28m
+redis   1/1   1     1     28m
+result   1/1   1     1     28m
+vote   1/1   1     1     28m
+worker   1/1   1     1     28m
+
+==> v1/Pod(related)
+NAME                  READY   STATUS    RESTARTS   AGE
+db-6959b7895c-smfzv   1/1     Running   0          28m
+redis-568fb796d-d8d5d   1/1   Running   0     28m
+result-7b9d454969-drcdn   1/1   Running   0     28m
+vote-5897bc5b5c-jlf6v   1/1   Running   0     28m
+worker-5f988d66cd-lq4xt   1/1   Running   0     28m
+
+==> v1/Secret
+NAME             TYPE     DATA   AGE
+db-credentials   Opaque   1      28m
+
+==> v1/Service
+NAME   TYPE        CLUSTER-IP     EXTERNAL-IP   PORT(S)    AGE
+db     ClusterIP   10.100.7.139   <none>        5432/TCP   28m
+redis   ClusterIP   10.100.35.4   <none>   6379/TCP   28m
+result   ClusterIP   10.100.151.25   <none>   8080/TCP   28m
+vote   ClusterIP   10.100.151.127   <none>   8080/TCP   28m
+
+
+TEST SUITE: None
+NOTES:
+Voting App installed into namespace voting.
+
+Once all deployments are ready:
+  kubectl -n voting get pods,svc
+
+In separate terminals, forward the web services:
+  kubectl -n voting port-forward svc/vote 18080:8080
+  kubectl -n voting port-forward svc/result 18081:8080
+
+Visit http://127.0.0.1:18080 and http://127.0.0.1:18081.
+
+WARNING: Redis/Postgres use emptyDir (ephemeral). The upstream app contains a
+known hardcoded postgres/postgres database credential. This is lab-only.
+
+===== RECOVERED VOTE IMAGE =====
+410133709895.dkr.ecr.eu-north-1.amazonaws.com/devops-capstone/vote:da6ad61465be
+
+===== RECOVERED WORKLOADS =====
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/db       1/1     1            1           28m
+deployment.apps/redis    1/1     1            1           28m
+deployment.apps/result   1/1     1            1           28m
+deployment.apps/vote     1/1     1            1           28m
+deployment.apps/worker   1/1     1            1           28m
+
+NAME                          READY   STATUS    RESTARTS   AGE
+pod/db-6959b7895c-smfzv       1/1     Running   0          28m
+pod/redis-568fb796d-d8d5d     1/1     Running   0          28m
+pod/result-7b9d454969-drcdn   1/1     Running   0          28m
+pod/vote-5897bc5b5c-jlf6v     1/1     Running   0          28m
+pod/worker-5f988d66cd-lq4xt   1/1     Running   0          28m
+
+NAME             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/db       ClusterIP   10.100.7.139     <none>        5432/TCP   28m
+service/redis    ClusterIP   10.100.35.4      <none>        6379/TCP   28m
+service/result   ClusterIP   10.100.151.25    <none>        8080/TCP   28m
+service/vote     ClusterIP   10.100.151.127   <none>        8080/TCP   28m

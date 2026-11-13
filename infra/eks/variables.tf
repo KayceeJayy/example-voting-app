@@ -67,3 +67,10 @@ variable "node_desired_size" {
     error_message = "Node count for this lab must be 1, 2, or 3."
   }
 }
+
+
+variable "additional_public_api_cidrs" {
+  description = "Additional restricted public API source CIDRs"
+  type        = list(string)
+  default     = []
+}

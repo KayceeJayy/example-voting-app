@@ -1,0 +1,3 @@
+level=WARN msg="upgrade failed" name=capstone-voting error="resource Deployment/voting/vote not ready. status: InProgress, message: Pending termination: 1\ncontext deadline exceeded"
+Error: UPGRADE FAILED: resource Deployment/voting/vote not ready. status: InProgress, message: Pending termination: 1
+context deadline exceeded

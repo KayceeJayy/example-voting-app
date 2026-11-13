@@ -1,0 +1,44 @@
+===== EKS VOTING APP SUCCESS =====
+2026-11-13T13:21:49+01:00
+
+===== HELM RELEASE HISTORY =====
+REVISION	UPDATED                 	STATUS  	CHART           	APP VERSION	DESCRIPTION     
+1       	Fri Nov 13 13:03:55 2026	deployed	voting-app-0.1.0	1.0        	Install complete
+
+===== KUBERNETES WORKLOADS =====
+NAME                     READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/db       1/1     1            1           17m
+deployment.apps/redis    1/1     1            1           17m
+deployment.apps/result   1/1     1            1           17m
+deployment.apps/vote     1/1     1            1           17m
+deployment.apps/worker   1/1     1            1           17m
+
+NAME                          READY   STATUS    RESTARTS   AGE
+pod/db-6959b7895c-smfzv       1/1     Running   0          17m
+pod/redis-568fb796d-d8d5d     1/1     Running   0          17m
+pod/result-7b9d454969-drcdn   1/1     Running   0          17m
+pod/vote-5897bc5b5c-jlf6v     1/1     Running   0          17m
+pod/worker-5f988d66cd-lq4xt   1/1     Running   0          17m
+
+NAME             TYPE        CLUSTER-IP       EXTERNAL-IP   PORT(S)    AGE
+service/db       ClusterIP   10.100.7.139     <none>        5432/TCP   17m
+service/redis    ClusterIP   10.100.35.4      <none>        6379/TCP   17m
+service/result   ClusterIP   10.100.151.25    <none>        8080/TCP   17m
+service/vote     ClusterIP   10.100.151.127   <none>        8080/TCP   17m
+
+===== WORKER LOGS =====
+Waiting for db
+Waiting for db
+Waiting for db
+Waiting for db
+Waiting for db
+Waiting for db
+Waiting for db
+Waiting for db
+Waiting for db
+Connected to db
+Connecting to redis
+Found redis at 10.100.35.4
+Processing vote for 'a' by 'e5b0fa4267c526a'
+Processing vote for 'b' by 'e5b0fa4267c526a'
+Processing vote for 'a' by 'e5b0fa4267c526a'

@@ -79,7 +79,7 @@ resource "aws_eks_cluster" "lab" {
     subnet_ids              = var.public_subnet_ids
     endpoint_private_access = true
     endpoint_public_access  = true
-    public_access_cidrs     = [var.public_api_cidr]
+    public_access_cidrs     = concat([var.public_api_cidr], var.additional_public_api_cidrs)
   }
 
   lifecycle {

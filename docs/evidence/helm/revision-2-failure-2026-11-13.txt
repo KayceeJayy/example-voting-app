@@ -1,0 +1,131 @@
+===== FAILED RELEASE HISTORY =====
+REVISION	UPDATED                 	STATUS  	CHART           	APP VERSION	DESCRIPTION                                                                                                                     
+1       	Fri Nov 13 13:03:55 2026	deployed	voting-app-0.1.0	1.0        	Install complete                                                                                                                
+2       	Fri Nov 13 13:26:44 2026	failed  	voting-app-0.1.0	1.0        	Upgrade "capstone-voting" failed: resource Deployment/voting/vote not ready. status: InProgress, message: Pending termination...
+
+===== VOTE PODS DURING BAD ROLLOUT =====
+NAME                    READY   STATUS             RESTARTS   AGE     IP              NODE                                           NOMINATED NODE   READINESS GATES
+vote-5897bc5b5c-jlf6v   1/1     Running            0          25m     172.31.26.108   ip-172-31-29-133.eu-north-1.compute.internal   <none>           <none>
+vote-668755cbd-7hdk6    0/1     ImagePullBackOff   0          2m51s   172.31.18.110   ip-172-31-29-133.eu-north-1.compute.internal   <none>           <none>
+
+===== VOTE POD DIAGNOSTICS =====
+Name:             vote-5897bc5b5c-jlf6v
+Namespace:        voting
+Priority:         0
+Service Account:  default
+Node:             ip-172-31-29-133.eu-north-1.compute.internal/172.31.29.133
+Start Time:       Fri, 13 Nov 2026 13:04:30 +0100
+Labels:           app=vote
+                  app.kubernetes.io/instance=capstone-voting
+                  pod-template-hash=5897bc5b5c
+                  topology.kubernetes.io/region=eu-north-1
+                  topology.kubernetes.io/zone=eu-north-1a
+Annotations:      <none>
+Status:           Running
+SeccompProfile:   RuntimeDefault
+IP:               172.31.26.108
+IPs:
+  IP:           172.31.26.108
+Controlled By:  ReplicaSet/vote-5897bc5b5c
+Containers:
+  vote:
+    Container ID:   containerd://c00d6143d06971dd9abe171090bdcf99f4159b1202f0cce5b44b09415def0fed
+    Image:          410133709895.dkr.ecr.eu-north-1.amazonaws.com/devops-capstone/vote:da6ad61465be
+    Image ID:       410133709895.dkr.ecr.eu-north-1.amazonaws.com/devops-capstone/vote@sha256:0bfe956110d5bed77efd9ea84a36c42fe45647087ddad531afb9cff4ffe28446
+    Port:           8080/TCP (http)
+    Host Port:      0/TCP (http)
+    State:          Running
+      Started:      Fri, 13 Nov 2026 13:04:32 +0100
+    Ready:          True
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  512Mi
+    Requests:
+      cpu:        100m
+      memory:     128Mi
+    Liveness:     http-get http://:http/ delay=0s timeout=1s period=20s #success=1 #failure=3
+    Readiness:    http-get http://:http/ delay=0s timeout=1s period=10s #success=1 #failure=3
+    Startup:      http-get http://:http/ delay=0s timeout=1s period=5s #success=1 #failure=12
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-6bjrc (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       True 
+  ContainersReady             True 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-6bjrc:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
+
+
+Name:             vote-668755cbd-7hdk6
+Namespace:        voting
+Priority:         0
+Service Account:  default
+Node:             ip-172-31-29-133.eu-north-1.compute.internal/172.31.29.133
+Start Time:       Fri, 13 Nov 2026 13:26:49 +0100
+Labels:           app=vote
+                  app.kubernetes.io/instance=capstone-voting
+                  pod-template-hash=668755cbd
+                  topology.kubernetes.io/region=eu-north-1
+                  topology.kubernetes.io/zone=eu-north-1a
+Annotations:      <none>
+Status:           Pending
+SeccompProfile:   RuntimeDefault
+IP:               172.31.18.110
+IPs:
+  IP:           172.31.18.110
+Controlled By:  ReplicaSet/vote-668755cbd
+Containers:
+  vote:
+    Container ID:   
+    Image:          410133709895.dkr.ecr.eu-north-1.amazonaws.com/devops-capstone/vote:deliberately-missing-rollback-demo
+    Image ID:       
+    Port:           8080/TCP (http)
+    Host Port:      0/TCP (http)
+    State:          Waiting
+      Reason:       ImagePullBackOff
+    Ready:          False
+    Restart Count:  0
+    Limits:
+      cpu:     500m
+      memory:  512Mi
+    Requests:
+      cpu:        100m
+      memory:     128Mi
+    Liveness:     http-get http://:http/ delay=0s timeout=1s period=20s #success=1 #failure=3
+    Readiness:    http-get http://:http/ delay=0s timeout=1s period=10s #success=1 #failure=3
+    Startup:      http-get http://:http/ delay=0s timeout=1s period=5s #success=1 #failure=12
+    Environment:  <none>
+    Mounts:
+      /var/run/secrets/kubernetes.io/serviceaccount from kube-api-access-qxrvj (ro)
+Conditions:
+  Type                        Status
+  PodReadyToStartContainers   True 
+  Initialized                 True 
+  Ready                       False 
+  ContainersReady             False 
+  PodScheduled                True 
+Volumes:
+  kube-api-access-qxrvj:
+    Type:                    Projected (a volume that contains injected data from multiple sources)
+    TokenExpirationSeconds:  3607
+    ConfigMapName:           kube-root-ca.crt
+    Optional:                false
+    DownwardAPI:             true
+QoS Class:                   Burstable
+Node-Selectors:              <none>
+Tolerations:                 node.kubernetes.io/not-ready:NoExecute op=Exists for 300s
+                             node.kubernetes.io/unreachable:NoExecute op=Exists for 300s
