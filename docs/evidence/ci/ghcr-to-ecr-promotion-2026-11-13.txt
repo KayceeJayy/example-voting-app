@@ -1,0 +1,44 @@
+===== GHCR TO ECR PROMOTION EVIDENCE =====
+2026-11-13T15:17:19+01:00
+
+===== GIT COMMIT =====
+49edf6be7f4eafee80401ffc8a4ae50639c3d066
+
+===== AWS ACCOUNT =====
+410133709895
+
+===== ECR IMAGE: vote =====
+[
+    {
+        "Digest": "sha256:2658c7b6470e1e461be9e3ecd128e1add45a60bb520f672794b324a2d40a1407",
+        "Tags": [
+            "49edf6be7f4e"
+        ],
+        "SizeBytes": 25192714
+    }
+]
+
+===== ECR IMAGE: worker =====
+[
+    {
+        "Digest": "sha256:ad5af19b23134bb0ed6b653941fe4e72c795c73b5ea99b35860958289b187cd3",
+        "Tags": [
+            "49edf6be7f4e"
+        ],
+        "SizeBytes": 85394970
+    }
+]
+
+===== ECR IMAGE: result =====
+[
+    {
+        "Digest": "sha256:2c8f6f57f28b3662b08956cca0d3aa630a343059603f6af438f28e4c2d1fb366",
+        "Tags": [
+            "49edf6be7f4e"
+        ],
+        "SizeBytes": 56065540
+    }
+]
+
+===== EKS CLUSTERS =====
+[]
