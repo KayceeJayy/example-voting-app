@@ -1,0 +1,66 @@
+# Isolated, disposable CI environment. No Kubernetes, ECR or AWS resources.
+# PostgreSQL password matches the upstream demo application and must NOT be reused in production.
+name: capstone-voting-ci
+
+services:
+  vote:
+    image: vote-secure:local
+    ports:
+      - "127.0.0.1:18080:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app
+
+  result:
+    image: result-secure:local
+    ports:
+      - "127.0.0.1:18081:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - app
+
+  worker:
+    image: worker-secure:local
+    depends_on:
+      redis:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+    networks:
+      - app
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    networks:
+      - app
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    networks:
+      - app
+
+volumes:
+  db-data:
+
+networks:
+  app:

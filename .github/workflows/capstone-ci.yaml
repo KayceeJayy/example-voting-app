@@ -1,0 +1,93 @@
+name: Capstone - Test, Build, Scan
+
+on:
+  push:
+    branches:
+      - main
+      - feature/container-hardening
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: capstone-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Helm, Images, Trivy and Integration
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Helm 4.3.0
+        uses: azure/setup-helm@v5.0.1
+        with:
+          version: v4.3.0
+
+      - name: Lint and render Voting App chart
+        run: bash scripts/validate_voting_helm.sh
+
+      - name: Build three hardened production images
+        shell: bash
+        run: |
+          set -euo pipefail
+          for component in vote worker result; do
+            echo "===== Building $component ====="
+            docker build --platform linux/amd64 --target final \
+              -t "${component}-secure:local" "./${component}"
+          done
+
+      - name: Trivy - Vote (block HIGH or CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: vote-secure:local
+          scanners: vuln
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+
+      - name: Trivy - Worker (block HIGH or CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: worker-secure:local
+          scanners: vuln
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+
+      - name: Trivy - Results (block HIGH or CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: result-secure:local
+          scanners: vuln
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+
+      - name: Start integration-test application
+        run: docker compose -f ci/docker-compose.ci.yml up -d --no-build
+
+      - name: Test end-to-end voting flow
+        run: bash scripts/test_voting_compose_ci.sh
+
+      - name: Show integration diagnostics on failure
+        if: failure()
+        run: |
+          docker compose -f ci/docker-compose.ci.yml ps || true
+          docker compose -f ci/docker-compose.ci.yml logs --tail=100 || true
+
+      - name: Clean up integration environment
+        if: always()
+        run: docker compose -f ci/docker-compose.ci.yml down --volumes --remove-orphans || true
