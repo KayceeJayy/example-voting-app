@@ -1,0 +1,127 @@
+name: Capstone - Publish Scanned Images to GHCR
+
+# Opt-in publishing: push a capstone-publish-<12-char commit SHA> Git tag.
+# Publishing is intentionally NOT triggered by every branch push or PR.
+on:
+  push:
+    tags:
+      - 'capstone-publish-*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: capstone-publish-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Test, scan, then publish Vote / Worker / Results
+    if: github.repository == 'KayceeJayy/example-voting-app'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout tagged commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Check that publication tag matches checked-out commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected="capstone-publish-$(git rev-parse --short=12 HEAD)"
+          if [[ "$GITHUB_REF_NAME" != "$expected" ]]; then
+            echo "Tag mismatch: got '$GITHUB_REF_NAME', expected '$expected'" >&2
+            exit 1
+          fi
+          echo "Publishing commit $(git rev-parse HEAD)"
+
+      - name: Install Helm 4.3.0
+        uses: azure/setup-helm@v5.0.1
+        with:
+          version: v4.3.0
+
+      - name: Validate Helm chart
+        run: bash scripts/validate_voting_helm.sh
+
+      - name: Build three hardened AMD64 images
+        shell: bash
+        run: |
+          set -euo pipefail
+          for component in vote worker result; do
+            echo "===== BUILD $component ====="
+            docker build --platform linux/amd64 --target final \
+              --label "org.opencontainers.image.source=https://github.com/${GITHUB_REPOSITORY}" \
+              -t "${component}-secure:local" "./${component}"
+          done
+
+      - name: Trivy gate - Vote (HIGH, CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: vote-secure:local
+          scanners: vuln
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+
+      - name: Trivy gate - Worker (HIGH, CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: worker-secure:local
+          scanners: vuln
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+
+      - name: Trivy gate - Results (HIGH, CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: image
+          image-ref: result-secure:local
+          scanners: vuln
+          format: table
+          severity: HIGH,CRITICAL
+          exit-code: '1'
+
+      - name: Start isolated integration environment
+        run: docker compose -f ci/docker-compose.ci.yml up -d --no-build
+
+      - name: Verify Vote to Redis to Worker to PostgreSQL flow
+        run: bash scripts/test_voting_compose_ci.sh
+
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          docker compose -f ci/docker-compose.ci.yml ps || true
+          docker compose -f ci/docker-compose.ci.yml logs --tail=100 || true
+
+      - name: Remove disposable integration environment
+        if: always()
+        run: docker compose -f ci/docker-compose.ci.yml down --volumes --remove-orphans || true
+
+      - name: Authenticate to GHCR with GitHub token
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push three commit-tagged images to GHCR
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="$(git rev-parse --short=12 HEAD)"
+          namespace="ghcr.io/${GITHUB_REPOSITORY,,}"
+          for component in vote worker result; do
+            remote="${namespace}-${component}:${tag}"
+            docker tag "${component}-secure:local" "$remote"
+            echo "===== PUSH $remote ====="
+            docker push "$remote"
+          done
+          echo "PASS: all three scanned image variants published for $tag"
