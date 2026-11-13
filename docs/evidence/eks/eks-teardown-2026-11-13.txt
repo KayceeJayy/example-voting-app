@@ -1,0 +1,19 @@
+===== SUCCESSFUL EKS TEARDOWN =====
+2026-11-13T13:57:07+01:00
+
+===== TERRAFORM STATE =====
+
+===== REMAINING EKS CLUSTERS =====
+{
+    "clusters": []
+}
+
+===== REMAINING CAPSTONE NODE INSTANCES =====
+[]
+
+===== RETAINED ECR REPOSITORIES =====
+[
+    "devops-capstone/vote",
+    "devops-capstone/worker",
+    "devops-capstone/result"
+]
