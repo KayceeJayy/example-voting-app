@@ -1,0 +1,94 @@
+DEVOPS CAPSTONE PROJECT
+=======================
+
+POSTGRESQL PERSISTENT STORAGE VERIFICATION
+Date: 2026-11-15
+AWS Region: eu-north-1
+EKS Cluster: devops-capstone-eks
+Kubernetes Namespace: voting-app
+Helm Release: voting-app
+
+1. STORAGE CONFIGURATION
+------------------------
+StorageClass: gp3
+Provisioner: ebs.csi.aws.com
+Volume Type: gp3
+Filesystem: ext4
+Encryption: Enabled
+Reclaim Policy: Retain
+Volume Binding Mode: WaitForFirstConsumer
+
+2. PERSISTENT VOLUME CLAIM
+--------------------------
+PVC Name: db-data
+PVC Status: Bound
+Capacity: 8Gi
+Access Mode: ReadWriteOnce
+
+Persistent Volume:
+pvc-03ac8c9c-5928-4c54-b67b-a432360d9116
+
+3. AWS EBS VOLUME
+-----------------
+Volume ID: vol-0fed301f9a1574c6f
+Availability Zone: eu-north-1b
+Volume Type: gp3
+Capacity: 8Gi
+Encryption: True
+State: in-use
+
+4. POSTGRESQL PERSISTENCE TEST
+------------------------------
+A test table named capstone_persistence_check was created.
+
+Test record:
+
+ID:
+capstone-ebs-check-2026-11-15
+
+Note:
+survives-pod-replacement
+
+Verification procedure:
+
+- Created the test table.
+- Inserted the test record.
+- Queried PostgreSQL and confirmed the record existed.
+- Deleted the PostgreSQL Pod.
+- Kubernetes recreated the PostgreSQL Pod.
+- Deployment rollout completed successfully.
+- Queried PostgreSQL again.
+- Confirmed the original record remained available.
+
+RESULT: PASSED
+
+5. APPLICATION HEALTH
+---------------------
+All five application Deployments reported 1/1 available:
+
+- PostgreSQL
+- Redis
+- Vote
+- Worker
+- Result
+
+Worker and Result each experienced one restart during the
+deliberate PostgreSQL Pod replacement test.
+
+Previous container logs confirmed PostgreSQL terminated
+their existing connections with SQLSTATE 57P01.
+
+The Result application also logged a missing votes table
+during initial startup before the Worker initialized it.
+
+Both workloads subsequently recovered and were Running.
+
+6. CONCLUSION
+-------------
+PostgreSQL persistent storage was successfully integrated
+through Helm using an encrypted AWS gp3 EBS volume.
+
+Database data survived PostgreSQL Pod replacement.
+
+This verifies Pod-level persistence, not node or
+Availability Zone disaster recovery.

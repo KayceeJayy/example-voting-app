@@ -76,7 +76,8 @@ spec:
               mountPath: /var/lib/postgresql/data
       volumes:
         - name: data
-          emptyDir: {}
+          persistentVolumeClaim:
+            claimName: db-data
 ---
 apiVersion: v1
 kind: Service

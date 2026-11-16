@@ -7,7 +7,26 @@ In separate terminals, forward the web services:
   kubectl -n {{ .Release.Namespace }} port-forward svc/vote 18080:8080
   kubectl -n {{ .Release.Namespace }} port-forward svc/result 18081:8080
 
-Visit http://127.0.0.1:18080 and http://127.0.0.1:18081.
+Visit:
+  http://127.0.0.1:18080
+  http://127.0.0.1:18081
 
-WARNING: Redis/Postgres use emptyDir (ephemeral). The upstream app contains a
-known hardcoded postgres/postgres database credential. This is lab-only.
+STORAGE CONFIGURATION:
+
+PostgreSQL:
+  Uses a persistent 8Gi encrypted AWS gp3 EBS volume.
+  PersistentVolumeClaim: db-data
+  StorageClass: gp3
+
+Redis:
+  Uses emptyDir ephemeral storage.
+  Redis data is not persistent across Pod replacement.
+
+SECURITY NOTICE:
+
+The upstream application contains a hardcoded
+postgres/postgres database credential in its Worker
+and Results implementations.
+
+This configuration is intended for laboratory use,
+not production deployment.
