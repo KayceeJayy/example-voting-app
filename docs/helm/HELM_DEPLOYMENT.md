@@ -1,109 +1,114 @@
-# Voting Application — Helm deployment workflow
+# Voting App — Helm deployment on AWS EKS
 
-This chart is designed for the tested five-component `dockersamples/example-voting-app` fork and a temporary one-node AWS EKS lab. It is **not** a production-ready, durable data system.
+This guide describes the **verified Capstone 1 lab deployment**, not a production-ready service. Its current Helm release is `voting-app` in namespace `voting-app`, running on cluster `devops-capstone-eks` in AWS region `eu-north-1`.
 
-## What this chart does
+## What the chart deploys
 
-- 5 Kubernetes `Deployment`s: `vote`, `redis`, `worker`, `db`, `result`
-- 4 internal-only `ClusterIP` Services: `vote`, `redis`, `db`, `result`
-- 1 Kubernetes Secret for PostgreSQL's *known demo credential* (`postgres`)
-- Configurable Git-SHA-tagged image references for Vote, Worker, Results
-- Non-root runtime for all five containers, resource requests/limits, web and database probes, `emptyDir` data volumes
-- No LoadBalancer, NodePort, Ingress, EBS volume, or additional AWS resource from this chart itself
+- Five Kubernetes Deployments: `vote`, `result`, `worker`, `redis`, `db` (PostgreSQL).
+- Four internal `ClusterIP` Services: `vote`, `result`, `redis`, `db`.
+- One Kubernetes Secret containing the upstream sample PostgreSQL password. **This is not sufficient credential hardening**: the Worker and Result application source uses `postgres/postgres` directly.
+- One `db-data` PersistentVolumeClaim requesting **8 GiB**, `ReadWriteOnce`, StorageClass `gp3`, mounted by PostgreSQL.
+- Redis uses `emptyDir` and remains **ephemeral**.
+- Resource requests/limits and probes; no public `LoadBalancer` or `Ingress` is created by this chart.
 
-> **Crucial limitation:** The upstream Worker and Results source uses `postgres/postgres` directly in its database connection strings. Storing the same demo password in a Kubernetes Secret does not fix that hardcoded credential. Keep this a closed lab and change the source, rebuild, rescan, and rotate passwords before any real-world use.
+The `gp3` StorageClass is defined separately in `k8s-specifications/storageclass-gp3.yaml`, with EBS CSI provisioner `ebs.csi.aws.com`, encryption enabled, `WaitForFirstConsumer`, and **Retain** reclaim policy. Terraform under `infra/eks/` manages the EKS Pod Identity Agent, EBS CSI driver and its IAM role. The StorageClass itself must be applied to Kubernetes before installing Helm.
 
-The application source uses DNS names `redis` and `db`, so this chart intentionally creates those exact services. Install **one** release per namespace.
+## 1. Validate the chart (no cluster changes)
 
-`emptyDir` storage is temporary. Restarting a PostgreSQL or Redis Pod loses data, and Helm rollback does not restore data. Database persistence requires a separate PVC/EBS CSI design.
-
-## 1. Safe local checks (no AWS changes)
+From the repository root:
 
 ```bash
-cd ~/projects/devops-capstone/example-voting-app
 bash scripts/validate_voting_helm.sh
-helm template capstone-voting helm/voting-app -n voting | less
+helm lint ./helm/voting-app
 ```
 
-The three application image values are placeholders in `helm/voting-app/values.yaml`, so **do not install using only the default values**.
+The three application image references in `helm/voting-app/values.yaml` are intentionally invalid placeholders; never install the chart with only default values. Use a verified image override, such as the local Git-ignored `helm/voting-app/values-ecr.local.yaml`.
 
-## 2. Publish hardened images to ECR (explicit opt-in)
-
-Requires the already-verified `terraform-process` AWS profile, local `vote-secure:local`, `worker-secure:local`, `result-secure:local`, Docker, Helm and Trivy. The script checks account identity, architecture, and the absence of HIGH/CRITICAL Trivy findings. It creates up to three private ECR repos (`devops-capstone/vote`, `.../worker`, `.../result`) with immutable tags, then pushes the images.
-
-**ECR storage and traffic may cost money**; these repositories are **not** managed by the existing EKS Terraform configuration, so `terraform destroy` will **not** delete them.
+To render the deployment with the existing local ECR override:
 
 ```bash
-bash scripts/publish_voting_images_ecr.sh
-# Only after authorizing ECR repo creation and image storage:
-bash scripts/publish_voting_images_ecr.sh --publish
+helm template voting-app ./helm/voting-app \
+  --namespace voting-app \
+  -f helm/voting-app/values-ecr.local.yaml \
+  > /tmp/voting-app-rendered.yaml
 ```
 
-The script writes the gitignored `helm/voting-app/values-ecr.local.yaml` (no credentials). It tags images using the current Git commit SHA; ensure the three local images were built from the source at that revision before using the tag as provenance. Helm deploys the exact tag specified in the file. To avoid mistaken provenance on a fresh source change, rebuild, rescan and commit before republishing.
+Do not commit rendered Kubernetes Secrets, Terraform state, credentials or local overrides.
 
-Private ECR pulls work from this EKS managed node group because its role has `AmazonEC2ContainerRegistryPullOnly`. Do not copy AWS login credentials to Kubernetes.
+## 2. Prepare AWS and storage
 
-## 3. Deploy the five components (creates workloads; only after confirming EKS is ready)
+AWS CLI access must be authorized for the target account. The Terraform plan must be reviewed before changes, and the current public IPv4 `/32` must match the EKS endpoint allowlist. Existing EKS access is verified with:
 
 ```bash
 export AWS_PROFILE=terraform-process
-export AWS_DEFAULT_REGION=eu-north-1
-kubectl --context devops-capstone-eks get nodes
+export AWS_REGION=eu-north-1
+kubectl get nodes
+kubectl get pods -n kube-system
+```
 
-helm upgrade --install capstone-voting helm/voting-app \
-  --namespace voting --create-namespace \
+After EBS CSI and Pod Identity are operational, apply or verify the StorageClass:
+
+```bash
+kubectl apply -f k8s-specifications/storageclass-gp3.yaml
+kubectl get storageclass gp3
+```
+
+This step does **not** create an EBS volume by itself; the volume is dynamically provisioned when the PostgreSQL PVC is consumed.
+
+## 3. Images and publication boundary
+
+GitHub Actions CI on branch pushes builds, scans and integration-tests custom images but does **not** deploy to EKS automatically. An explicitly pushed release tag triggers a separate GHCR publishing workflow; promotion to private AWS ECR is operator-controlled and documented in `docs/ci/GHCR_PHASE_2.md` and `docs/evidence/ci/ghcr-to-ecr-promotion-2026-11-13.txt`.
+
+The actual EKS deployment used commit-tagged Vote, Worker and Result images in private ECR. The worker-node IAM role allows ECR pulls. The local Helm image override must reference images that really exist. ECR repositories are **not** destroyed with the EKS Terraform stack and may incur storage charges.
+
+## 4. Install or update the current release
+
+Only run after confirming AWS access, EKS node readiness, StorageClass and valid image tags:
+
+```bash
+helm upgrade --install voting-app ./helm/voting-app \
+  --namespace voting-app --create-namespace \
   -f helm/voting-app/values-ecr.local.yaml \
-  --wait --timeout 6m
+  --wait --timeout 8m
 
-kubectl --context devops-capstone-eks -n voting get deployments,pods,services
-kubectl --context devops-capstone-eks -n voting logs deploy/worker --tail=80
+helm status voting-app -n voting-app
+kubectl get deployments,pods,svc -n voting-app
+kubectl get pvc db-data -n voting-app
+kubectl get pv
 ```
 
-Confirm all **five Pods are Running/Ready**; look for Worker `Connected to db`, `Connecting to redis`, then vote processing logs. The Worker has no HTTP probe, so logs and end-to-end voting are the functional checks. If Pods do not become Ready, inspect `kubectl describe pod` and `kubectl get events` and resolve the cause rather than repeatedly reinstalling.
+Expected: five Deployments available, and PVC `db-data` **Bound** to an 8 GiB gp3 persistent volume. The verified deployment used an **encrypted** AWS EBS volume, `vol-0fed301f9a1574c6f` in `eu-north-1b` on 15 November 2026. Volume IDs change if storage is recreated.
 
-## 4. Smoke test with local port forwards
+## 5. Test the voting websites
 
-In **terminal A**:
+Run these commands in **separate terminals**:
 
 ```bash
-kubectl --context devops-capstone-eks -n voting port-forward svc/vote 18080:8080
+kubectl -n voting-app port-forward svc/vote 18080:8080
 ```
-
-In **terminal B**:
 
 ```bash
-kubectl --context devops-capstone-eks -n voting port-forward svc/result 18081:8080
+kubectl -n voting-app port-forward svc/result 18081:8080
 ```
 
-Open `http://127.0.0.1:18080` and `http://127.0.0.1:18081`. Cast a vote in a fresh browser session and confirm the Results page updates. Alternatively test HTTP from a third terminal:
+Open http://127.0.0.1:18080 and http://127.0.0.1:18081. Cast a vote from a fresh browser session and verify the Result page updates. Port forwarding exposes the sites only on your local machine and requires working Kubernetes API connectivity.
+
+## 6. Data persistence, rollback and limitations
+
+**Persistence:** On 15 November 2026, a PostgreSQL test record was inserted, the database Pod was deleted, the deployment recovered and the record was queried again successfully. See `docs/evidence/eks/postgres-persistence-2026-11-15.txt`. This confirms survival of **Pod replacement**, not cross-AZ failover or backup/restore.
+
+During that test, Worker and Result each restarted once when PostgreSQL terminated their connections with `SQLSTATE 57P01`. Both recovered through Kubernetes. The Result service also experienced a first-start query before Worker had initialized the `votes` table. Graceful application-level database reconnection remains an improvement opportunity.
+
+**Rollback:** On 13 November 2026 an intentionally failing release was followed by a successful manual Helm rollback, documented in `docs/evidence/helm/revision-3-rollback-2026-11-13.txt`. This was an **earlier** release named `capstone-voting` in namespace `voting`, not the currently running `voting-app` release. Do not use its revision numbers for the current release. To inspect current history:
 
 ```bash
-curl -fsSI http://127.0.0.1:18080/ || curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18080/
-curl -fsS -o /dev/null -w '%{http_code}\n' http://127.0.0.1:18081/
+helm history voting-app -n voting-app
+# Only after selecting a known-good CURRENT revision:
+# helm rollback voting-app <REVISION> -n voting-app --wait
 ```
 
-Record screenshots and Helm release history in `docs/evidence/helm/`, but do not commit secrets, kubeconfig, Terraform state or rendered Kubernetes Secrets.
+**Security:** This is a lab-only upstream example with hardcoded PostgreSQL credentials, a single worker node, one-AZ EBS storage and ephemeral Redis. Do not treat it as production-ready.
 
-## 5. Intentional failing rollout + explicit rollback (later milestone)
+## 7. Cost and cleanup safeguards
 
-Record the known-good revision with `helm history capstone-voting -n voting`. A deliberately nonexistent Vote image tag can demonstrate a failed upgrade and an explicit `helm rollback`, but perform this test **only after all Pods work** and with sufficient time for recovery. Avoid using `--atomic` when you need to show a manual rollback; it rolls back automatically. Do not destroy the database Pod as part of rollback evidence because its storage is ephemeral.
-
-## 6. Cleanup today (cluster incurs charges until destroyed)
-
-First uninstall the chart if installed:
-
-```bash
-helm uninstall capstone-voting -n voting
-```
-
-Before logging off, destroy the paid EKS infrastructure and verify no cluster remains:
-
-```bash
-terraform -chdir=infra/eks plan -destroy -out=destroy.tfplan
-# Inspect: only 8 capstone resources should be affected; default VPC/subnets remain.
-terraform -chdir=infra/eks apply -input=false destroy.tfplan
-aws eks list-clusters --region eu-north-1 --profile terraform-process
-terraform -chdir=infra/eks state list
-```
-
-ECR repositories persist after EKS destruction and can have a small storage charge. To delete them later, first verify their images are no longer needed for a redeployment and then use the AWS ECR cleanup process with explicit consent.
+AWS EKS, EC2 nodes, public IPv4, EBS and ECR can incur charges. A PVC using **Retain** can leave behind a billable EBS volume after Helm uninstall or cluster destruction. **Do not run `helm uninstall` or `terraform destroy` as a routine end-of-session step.** Before deliberate teardown, inspect PV/PVCs, EBS volume IDs and intended retention, review Terraform's destroy plan, and separately verify any ECR or retained EBS cleanup. This chart does not manage the gp3 StorageClass, the EBS CSI add-on or the ECR repositories.

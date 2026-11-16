@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1700" height="1270" viewBox="0 0 1700 1270" role="img" aria-labelledby="arch-title arch-desc">
+<title id="arch-title">DevOps Capstone 1 architecture</title>
+<desc id="arch-desc">GitHub branch pushes automatically run CI with build, Trivy scans, Helm validation and integration tests. A deliberate release tag triggers scanned image publication to GHCR. An operator promotes verified images into private ECR and manually deploys with Helm to Terraform-managed AWS EKS. In Kubernetes, a browser connects through local port forwards to Vote and Result; Vote sends messages to Redis, Worker consumes them and writes PostgreSQL, and Result reads the database. PostgreSQL uses an encrypted 8 GiB gp3 EBS persistent volume. Redis is ephemeral.</desc>
+<defs>
+ <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#536A83"/></marker>
+ <marker id="aBlue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2463CC"/></marker>
+ <marker id="aGreen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#13846F"/></marker>
+ <style>
+  text{font-family:'DejaVu Sans',Arial,sans-serif}
+  .small{font-size:17px;fill:#587087}
+  .eyebrow{font-size:18px;font-weight:700;letter-spacing:1px;fill:#2463CC}
+  .h2{font-size:27px;font-weight:700}
+  .nodeHead{font-size:22px;font-weight:700}
+  .nodeBody{font-size:17px;fill:#556A7D}
+  .line{stroke:#536A83;stroke-width:3;fill:none;marker-end:url(#arrow);stroke-linecap:round;stroke-linejoin:round}
+  .blueLine{stroke:#2463CC;stroke-width:3;fill:none;marker-end:url(#aBlue);stroke-linecap:round;stroke-linejoin:round}
+  .greenLine{stroke:#13846F;stroke-width:3;fill:none;marker-end:url(#aGreen);stroke-linecap:round;stroke-linejoin:round}
+  .dashed{stroke-dasharray:8 7}
+ </style>
+</defs>
+<rect x="0" y="0" width="1700" height="1270" rx="0" fill="#F6F9FD" stroke="none" stroke-width="2"/>
+<rect x="0" y="0" width="1700" height="117" rx="0" fill="#162B45" stroke="none" stroke-width="2"/>
+<text x="64" y="54" font-size="19" font-weight="700" fill="#A6D1FF">DEVOPS CAPSTONE 1</text>
+<text x="64" y="94" font-size="38" font-weight="700" fill="#FFFFFF">Voting App · AWS EKS Architecture</text>
+<text x="1600" y="67" font-size="18" font-weight="700" fill="#B5D3EA" text-anchor="end">VALIDATED LAB</text>
+<rect x="55" y="150" width="1590" height="370" rx="24" fill="#FFFFFF" stroke="#DAE4EE" stroke-width="2"/>
+<text x="88" y="191" fill="#213248" class="eyebrow">01   BUILD · SCAN · PUBLISH</text>
+<text x="88" y="231" fill="#213248" class="h2">CI is automatic; release and deployment are controlled</text>
+<rect x="95" y="267" width="265" height="94" rx="16" fill="#F3F7FF" stroke="#BDD2F7" stroke-width="2"/>
+<text x="117" y="305" fill="#213248" class="nodeHead">GitHub fork</text>
+<text x="117" y="332" fill="#213248" class="nodeBody">Branch pushes and source</text>
+<rect x="440" y="267" width="510" height="94" rx="16" fill="#F3F7FF" stroke="#BDD2F7" stroke-width="2"/>
+<text x="462" y="305" fill="#213248" class="nodeHead">CI quality gate</text>
+<text x="462" y="332" fill="#213248" class="nodeBody">Helm lint · Docker build · Trivy · vote integration</text>
+<path d="M 360,314 L 439,314" class="blueLine"/>
+<rect x="990" y="290" width="560" height="44" rx="14" fill="#E7F4F0" stroke="none" stroke-width="2"/>
+<text x="1011" y="319" font-size="19" font-weight="700" fill="#146C5D">AUTOMATED ON PUSH — no EKS deployment</text>
+<rect x="95" y="390" width="265" height="90" rx="16" fill="#FAF6FF" stroke="#E4D1F7" stroke-width="2"/>
+<text x="117" y="428" fill="#213248" class="nodeHead">Release tag</text>
+<text x="117" y="455" fill="#213248" class="nodeBody">Explicit, SHA-matched tag</text>
+<rect x="440" y="390" width="285" height="90" rx="16" fill="#FAF6FF" stroke="#E4D1F7" stroke-width="2"/>
+<text x="462" y="428" fill="#213248" class="nodeHead">GHCR publishing</text>
+<text x="462" y="455" fill="#213248" class="nodeBody">Retest, rescan, push</text>
+<rect x="790" y="390" width="204" height="90" rx="16" fill="#FAF6FF" stroke="#E4D1F7" stroke-width="2"/>
+<text x="812" y="428" fill="#213248" class="nodeHead">GHCR</text>
+<text x="812" y="455" fill="#213248" class="nodeBody">SHA-tagged images</text>
+<rect x="1065" y="390" width="272" height="90" rx="16" fill="#FFF9E9" stroke="#E8DBBB" stroke-width="2"/>
+<text x="1087" y="428" fill="#213248" class="nodeHead">Manual promotion</text>
+<text x="1087" y="455" fill="#213248" class="nodeBody">Operator action</text>
+<rect x="1405" y="390" width="204" height="90" rx="16" fill="#FFF9E9" stroke="#E8DBBB" stroke-width="2"/>
+<text x="1427" y="428" fill="#213248" class="nodeHead">Private ECR</text>
+<text x="1427" y="455" fill="#213248" class="nodeBody">Three images</text>
+<path d="M 228,361 L 228,389" class="blueLine dashed"/>
+<path d="M 360,435 L 439,435" class="blueLine"/>
+<path d="M 725,435 L 789,435" class="line"/>
+<path d="M 994,435 L 1064,435" class="line"/>
+<path d="M 1337,435 L 1404,435" class="line"/>
+<rect x="55" y="548" width="1590" height="620" rx="24" fill="#FFFFFF" stroke="#DAE4EE" stroke-width="2"/>
+<text x="88" y="589" fill="#213248" class="eyebrow">02   DEPLOY · RUN · PERSIST</text>
+<text x="88" y="629" fill="#213248" class="h2">Terraform-managed EKS · Helm-managed workloads</text>
+<rect x="83" y="682" width="250" height="110" rx="16" fill="#F3F7FF" stroke="#BDD2F7" stroke-width="2"/>
+<text x="105" y="720" fill="#213248" class="nodeHead">Terraform</text>
+<text x="105" y="747" fill="#213248" class="nodeBody">EKS · IAM · node group</text>
+<text x="105" y="771" fill="#213248" class="nodeBody">Pod Identity · EBS CSI</text>
+<rect x="83" y="831" width="250" height="110" rx="16" fill="#F3F7FF" stroke="#BDD2F7" stroke-width="2"/>
+<text x="105" y="869" fill="#213248" class="nodeHead">Local browser</text>
+<text x="105" y="896" fill="#213248" class="nodeBody">Vote / Result access</text>
+<text x="105" y="920" fill="#213248" class="nodeBody">via kubectl port-forward</text>
+<rect x="373" y="672" width="1234" height="454" rx="21" fill="#F5FBFF" stroke="#A8C9E9" stroke-width="2"/>
+<text x="402" y="713" font-size="23" font-weight="700" fill="#1B4E83">AWS EKS · voting-app namespace · one worker node</text>
+<text x="402" y="745" font-size="18" font-weight="400" fill="#567589">Helm release: voting-app · five Deployments · four ClusterIP Services</text>
+<path d="M 333,736 L 372,736" class="blueLine"/>
+<rect x="410" y="812" width="185" height="102" rx="16" fill="#F3FCF9" stroke="#B6DAD2" stroke-width="2"/>
+<text x="432" y="850" fill="#213248" class="nodeHead">Vote</text>
+<text x="432" y="877" fill="#213248" class="nodeBody">Python · web</text>
+<rect x="657" y="812" width="185" height="102" rx="16" fill="#F3FCF9" stroke="#B6DAD2" stroke-width="2"/>
+<text x="679" y="850" fill="#213248" class="nodeHead">Redis</text>
+<text x="679" y="877" fill="#213248" class="nodeBody">Ephemeral queue</text>
+<rect x="905" y="812" width="185" height="102" rx="16" fill="#F3FCF9" stroke="#B6DAD2" stroke-width="2"/>
+<text x="927" y="850" fill="#213248" class="nodeHead">Worker</text>
+<text x="927" y="877" fill="#213248" class="nodeBody">.NET processor</text>
+<rect x="1153" y="812" width="193" height="102" rx="16" fill="#F3FCF9" stroke="#B6DAD2" stroke-width="2"/>
+<text x="1175" y="850" fill="#213248" class="nodeHead">PostgreSQL</text>
+<text x="1175" y="877" fill="#213248" class="nodeBody">Persistent DB</text>
+<rect x="1408" y="812" width="165" height="102" rx="16" fill="#F3FCF9" stroke="#B6DAD2" stroke-width="2"/>
+<text x="1430" y="850" fill="#213248" class="nodeHead">Result</text>
+<text x="1430" y="877" fill="#213248" class="nodeBody">Node.js · web</text>
+<path d="M 333,883 L 409,883" class="greenLine"/>
+<path d="M 595,862 L 656,862" class="greenLine"/>
+<path d="M 842,862 L 904,862" class="greenLine"/>
+<path d="M 1090,862 L 1152,862" class="greenLine"/>
+<path d="M 1346,862 L 1407,862" class="greenLine"/>
+<text x="619" y="804" font-size="16" font-weight="600" fill="#37776C">enqueue</text>
+<text x="851" y="804" font-size="16" font-weight="600" fill="#37776C">consume</text>
+<text x="1106" y="804" font-size="16" font-weight="600" fill="#37776C">write</text>
+<text x="1362" y="804" font-size="16" font-weight="600" fill="#37776C">read</text>
+<rect x="1128" y="981" width="254" height="91" rx="17" fill="#E5F3FE" stroke="#8DB6DE" stroke-width="2"/>
+<text x="1150" y="1018" font-size="21" font-weight="700" fill="#23466B">8 GiB gp3 EBS</text>
+<text x="1150" y="1049" font-size="16" font-weight="400" fill="#47728F">Encrypted · PVC db-data</text>
+<path d="M 1250,980 L 1250,915" class="blueLine"/>
+<path d="M 208,941 L 208,1104 L 1487,1104 L 1487,915" class="blueLine dashed"/>
+<text x="430" y="1094" font-size="16" font-weight="600" fill="#2463CC">Results website also accessed via local port-forward</text>
+<path d="M 1510,481 L 1510,547 L 1510,670" class="blueLine dashed"/>
+<text x="1539" y="567" font-size="16" font-weight="600" fill="#2463CC" text-anchor="end">image pull</text>
+<rect x="58" y="1190" width="1584" height="54" rx="13" fill="#E9F0F7" stroke="none" stroke-width="2"/>
+<text x="83" y="1224" font-size="17" font-weight="700" fill="#334B65">LAB LIMITATIONS</text>
+<text x="295" y="1224" font-size="16" font-weight="400" fill="#435D74">Manual ECR promotion + Helm deploy  ·  Single node/AZ for EBS  ·  Redis ephemeral  ·  Demo database credentials</text>
+</svg>
