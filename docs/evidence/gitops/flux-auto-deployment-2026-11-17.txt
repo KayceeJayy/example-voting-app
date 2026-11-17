@@ -5,22 +5,22 @@ CAPSTONE 1 — FLUX AUTOMATIC DEPLOYMENT EVIDENCE
 ae8b545 test: demonstrate automatic Flux deployment
 
 ===== FLUX GIT SOURCE =====
-NAME              	REVISION                                 	SUSPENDED	READY	MESSAGE                                                                  
-example-voting-app	feature/container-hardening@sha1:ae8b545b	False    	True 	stored artifact for revision 'feature/container-hardening@sha1:ae8b545b'	
+NAME              	REVISION                                 	SUSPENDED	READY	MESSAGE
+example-voting-app	feature/container-hardening@sha1:ae8b545b	False    	True 	stored artifact for revision 'feature/container-hardening@sha1:ae8b545b'
 
 ===== FLUX KUSTOMIZATION =====
-NAME      	REVISION                                 	SUSPENDED	READY	MESSAGE                                                     
-voting-app	feature/container-hardening@sha1:ae8b545b	False    	True 	Applied revision: feature/container-hardening@sha1:ae8b545b	
+NAME      	REVISION                                 	SUSPENDED	READY	MESSAGE
+voting-app	feature/container-hardening@sha1:ae8b545b	False    	True 	Applied revision: feature/container-hardening@sha1:ae8b545b
 
 ===== FLUX HELM RELEASE =====
-NAME      	REVISION          	SUSPENDED	READY	MESSAGE                                                                                              
-voting-app	0.1.0+ae8b545b64df	False    	True 	Helm upgrade succeeded for release voting-app/voting-app.v3 with chart voting-app@0.1.0+ae8b545b64df	
+NAME      	REVISION          	SUSPENDED	READY	MESSAGE
+voting-app	0.1.0+ae8b545b64df	False    	True 	Helm upgrade succeeded for release voting-app/voting-app.v3 with chart voting-app@0.1.0+ae8b545b64df
 
 ===== AUTOMATIC DEPLOYMENT PROOF =====
 2026-11-17
 
 ===== HELM RELEASE HISTORY =====
-REVISION	UPDATED                 	STATUS    	CHART                        	APP VERSION	DESCRIPTION     
+REVISION	UPDATED                 	STATUS    	CHART                        	APP VERSION	DESCRIPTION
 1       	Sun Nov 15 06:28:08 2026	superseded	voting-app-0.1.0             	1.0        	Install complete
 2       	Tue Nov 17 08:03:15 2026	superseded	voting-app-0.1.0+0be5e888f0c7	1.0        	Upgrade complete
 3       	Tue Nov 17 08:07:24 2026	deployed  	voting-app-0.1.0+ae8b545b64df	1.0        	Upgrade complete
@@ -38,8 +38,7 @@ NAME      STATUS   VOLUME                                     CAPACITY   ACCESS 
 db-data   Bound    pvc-03ac8c9c-5928-4c54-b67b-a432360d9116   8Gi        RWO            gp3            <unset>                 2d2h
 
 ===== PRESERVED DATABASE VOTE =====
- total_votes 
+ total_votes
 -------------
            1
 (1 row)
-
