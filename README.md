@@ -1,10 +1,10 @@
 # DevOps Capstone 1 — Example Voting App on AWS EKS
 
-[![Capstone CI](https://github.com/KayceeJayy/example-voting-app/actions/workflows/capstone-ci.yaml/badge.svg?branch=feature%2Fcontainer-hardening)](https://github.com/KayceeJayy/example-voting-app/actions/workflows/capstone-ci.yaml)
+[![Capstone CI](https://github.com/KayceeJayy/example-voting-app/actions/workflows/capstone-ci.yaml/badge.svg?branch=main)](https://github.com/KayceeJayy/example-voting-app/actions/workflows/capstone-ci.yaml)
 
 This repository is a DevOps capstone based on the [Docker Samples example voting app](https://github.com/dockersamples/example-voting-app). The objective is to take a five-service application from local Docker Compose to hardened containers, automated quality checks, AWS infrastructure as code, an EKS/Helm deployment, and a demonstrated rollback.
 
-- **Working branch:** `feature/container-hardening`
+- **Submission branch:** `main` (Flux watches `feature/container-hardening`)
 - **Cloud region:** `eu-north-1` (Stockholm)
 - **Cluster:** `devops-capstone-eks`
 - **Current Helm release / namespace:** `voting-app` / `voting-app`
@@ -43,10 +43,14 @@ flowchart LR
     GHCR -->|Operator-controlled promotion| ECR[Private AWS ECR]
     Terraform[Terraform] -->|Provisions| EKS[AWS EKS]
     ECR -->|Image pull| Helm[Helm release in EKS]
+    Repo -->|GitOps sync| Flux[Flux controllers]
+    Flux --> Helm
     Helm --> EKS
 ```
 
-**Automation boundary:** a branch push runs the CI quality gate, but does **not** automatically publish images to ECR or deploy to EKS. GHCR publishing requires a deliberately pushed tag; promotion to ECR and Helm deployment are separate operator actions. Full automatic deployment on every push is **not yet implemented** and remains a capstone acceptance item to review.
+**Automation update — 17 November 2026:** Flux successfully detected a Git push and automatically upgraded the existing EKS Helm release from revision 2 to revision 3. All five Deployments remained healthy and PostgreSQL data was preserved.
+
+**Remaining limitation:** GitHub Actions builds, scans and tests automatically, but successful CI is not yet a prerequisite for Flux deployment. New images still require tag-triggered GHCR publishing and manual promotion to private ECR.
 
 ## Repository layout
 
@@ -74,7 +78,6 @@ The commands below assume a Linux shell and that you are in the repository root.
 ```bash
 git clone https://github.com/KayceeJayy/example-voting-app.git
 cd example-voting-app
-git checkout feature/container-hardening
 
 docker compose up -d --build
 docker compose ps
@@ -226,6 +229,8 @@ helm history voting-app -n voting-app
 
 ## Evidence and related documentation
 
+- [Verified Flux automatic deployment](docs/evidence/gitops/flux-auto-deployment-2026-11-17.txt)
+
 - [Container security report and Trivy results](docs/security/SECURITY_REPORT.md)
 - [CI pipeline explanation](docs/ci/CI_PHASE_1.md)
 - [GHCR publishing workflow](docs/ci/GHCR_PHASE_2.md)
@@ -243,7 +248,7 @@ The legacy `architecture.excalidraw.png` belongs to the original example applica
 - **Lab credentials:** the upstream Worker/Result code hardcodes `postgres/postgres`. The Helm Secret does not eliminate that hardcoded credential. Do not use this deployment for production or publicly expose database services.
 - **Availability:** one EC2 worker node and a single-AZ EBS volume do not provide high availability; ephemeral Redis data can be lost on Pod replacement.
 - **Recovery:** application containers rely on Kubernetes restarts when PostgreSQL disconnects; the Result app can query before the Worker creates the `votes` table on initial startup.
-- **CI/CD gap:** the current pipeline validates automatically, but EKS deployment is not triggered by ordinary pushes. An approved secure deployment route is needed for full automation. Hosted GitHub runners cannot normally access the narrowly allowlisted public EKS API endpoint.
+- **CI/CD limitation:** Flux automatically reconciles Git-tracked Helm changes, but new images are not automatically published to ECR or gated by successful CI.
 - **Cleanup:** stop using chargeable AWS resources when the lab is complete. Before `terraform destroy`, inventory persistent volumes and retained EBS disks; a `Retain` volume can survive deletion and continue billing. The private ECR repositories are **not** managed by this EKS Terraform stack and also require separate review/cleanup. Before destruction, plan and inspect carefully:
 
   ```bash
@@ -259,7 +264,7 @@ The legacy `architecture.excalidraw.png` belongs to the original example applica
 
 **Demonstrated:** local voting, hardened custom images, CI quality gates, tag-gated GHCR publishing, manual ECR promotion, Terraform EKS provisioning/teardown and recreation, Helm installation/rollback, and encrypted PostgreSQL EBS persistence.
 
-**Before final hand-in:** confirm the current EKS deployment processes a new vote end-to-end; verify no secrets are committed; and resolve or explicitly disclose the difference between current manual EKS deployment and the original requirement for push-to-deploy automation.
+**Final verification:** EKS voting passed end-to-end; the preliminary secrets audit passed; Flux automatic deployment succeeded. Full CI-gated image delivery remains outstanding.
 
 ---
 
