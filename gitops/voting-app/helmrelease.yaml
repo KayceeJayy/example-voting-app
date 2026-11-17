@@ -5,7 +5,7 @@ metadata:
   namespace: voting-app
 spec:
   # SAFETY: Do not manage the existing Helm release until reviewed.
-  suspend: true
+  suspend: false
   interval: 1m
   releaseName: voting-app
   targetNamespace: voting-app
