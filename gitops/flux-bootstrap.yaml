@@ -1,0 +1,23 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: example-voting-app
+  namespace: flux-system
+spec:
+  interval: 1m
+  url: https://github.com/KayceeJayy/example-voting-app.git
+  ref:
+    branch: feature/container-hardening
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: voting-app
+  namespace: flux-system
+spec:
+  interval: 1m
+  path: ./gitops/voting-app
+  prune: false
+  sourceRef:
+    kind: GitRepository
+    name: example-voting-app

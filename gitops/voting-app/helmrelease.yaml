@@ -1,0 +1,35 @@
+apiVersion: helm.toolkit.fluxcd.io/v2
+kind: HelmRelease
+metadata:
+  name: voting-app
+  namespace: voting-app
+spec:
+  # SAFETY: Do not manage the existing Helm release until reviewed.
+  suspend: true
+  interval: 1m
+  releaseName: voting-app
+  targetNamespace: voting-app
+  storageNamespace: voting-app
+  timeout: 8m
+  chart:
+    spec:
+      chart: ./helm/voting-app
+      sourceRef:
+        kind: GitRepository
+        name: example-voting-app
+        namespace: flux-system
+      interval: 1m
+      reconcileStrategy: Revision
+  values:
+    vote:
+      image:
+        repository: 410133709895.dkr.ecr.eu-north-1.amazonaws.com/devops-capstone/vote
+        tag: "49edf6be7f4e"
+    worker:
+      image:
+        repository: 410133709895.dkr.ecr.eu-north-1.amazonaws.com/devops-capstone/worker
+        tag: "49edf6be7f4e"
+    result:
+      image:
+        repository: 410133709895.dkr.ecr.eu-north-1.amazonaws.com/devops-capstone/result
+        tag: "49edf6be7f4e"
